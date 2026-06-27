@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Lönespec Pro Android v4.1 layoutfix
+Lönespec Pro Android v5.0
 
-Ändringar:
-- Tog bort Totalt timmar och Årslön från startsidan.
-- Flyttade Effektiv skatt till en diskret rad under sammanfattningen.
-- Fixade ersättnings-popup så radbrytningar visas korrekt.
+Stabil UI-uppdatering byggd ovanpå den fungerande v4.1-koden.
+Fokus:
+- Modernare kort och tydligare startsida.
+- Mindre scroll och kompaktare inmatning.
+- Tydligare knapphierarki med Spara som huvudknapp.
+- Bottennavigation med Hem, Historik, Lönespec och Inställningar.
+- Versionsinfo flyttad till Inställningar/Om appen.
+- Samma id:n och samma beräkningslogik som tidigare för att minimera kraschrisken.
 """
 
 from kivy.app import App
@@ -27,6 +31,10 @@ from core.calculator import (
 from core.storage import HistoryStore
 
 
+APP_VERSION = "Android v5.0"
+APP_INFO = "Lönespec Pro Android v5.0\nBygger vidare på den stabila v4.1-versionen."
+
+
 def format_ersattning(v):
     """Visar ersättning snyggt, t.ex. 24,57 kr/h."""
     return f"{v:.2f}".replace(".", ",") + " kr/h"
@@ -37,15 +45,15 @@ KV = r"""
 
 <MoneyInput@TextInput>:
     multiline: False
-    font_size: "17sp"
+    font_size: "16sp"
     size_hint_y: None
-    height: dp(44)
-    padding: [dp(10), dp(10), dp(10), dp(10)]
+    height: dp(40)
+    padding: [dp(10), dp(8), dp(10), dp(8)]
     background_normal: ""
     background_active: ""
-    background_color: 1, 1, 1, 1
-    foreground_color: 0.06, 0.09, 0.16, 1
-    cursor_color: 0.15, 0.39, 0.92, 1
+    background_color: 0.96, 0.98, 1, 1
+    foreground_color: 0.05, 0.08, 0.14, 1
+    cursor_color: 0.13, 0.34, 0.78, 1
 
 <Card@BoxLayout>:
     orientation: "vertical"
@@ -54,23 +62,35 @@ KV = r"""
     size_hint_y: None
     canvas.before:
         Color:
-            rgba: 1, 1, 1, 1
+            rgba: 0.88, 0.91, 0.95, 1
         RoundedRectangle:
-            pos: self.pos
+            pos: self.x, self.y - dp(1)
             size: self.size
-            radius: [dp(16)]
-
-<SummaryCard@BoxLayout>:
-    orientation: "vertical"
-    padding: dp(8)
-    spacing: dp(2)
-    canvas.before:
+            radius: [dp(18)]
         Color:
             rgba: 1, 1, 1, 1
         RoundedRectangle:
             pos: self.pos
             size: self.size
-            radius: [dp(14)]
+            radius: [dp(18)]
+
+<SummaryCard@BoxLayout>:
+    orientation: "vertical"
+    padding: dp(9)
+    spacing: dp(1)
+    canvas.before:
+        Color:
+            rgba: 0.88, 0.91, 0.95, 1
+        RoundedRectangle:
+            pos: self.x, self.y - dp(1)
+            size: self.size
+            radius: [dp(16)]
+        Color:
+            rgba: 1, 1, 1, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16)]
 
 <BlueButton@Button>:
     size_hint_y: None
@@ -78,42 +98,53 @@ KV = r"""
     font_size: "16sp"
     bold: True
     background_normal: ""
-    background_color: 0.15, 0.39, 0.92, 1
+    background_down: ""
+    background_color: 0.13, 0.34, 0.78, 1
     color: 1, 1, 1, 1
 
 <LightButton@Button>:
     size_hint_y: None
     height: dp(44)
-    font_size: "15sp"
+    font_size: "14sp"
     background_normal: ""
-    background_color: 0.89, 0.93, 0.98, 1
-    color: 0.06, 0.09, 0.16, 1
+    background_down: ""
+    background_color: 0.91, 0.95, 1, 1
+    color: 0.05, 0.08, 0.14, 1
+
+<NavButton@Button>:
+    size_hint_y: None
+    height: dp(52)
+    font_size: "13sp"
+    background_normal: ""
+    background_down: ""
+    background_color: 0.98, 0.99, 1, 1
+    color: 0.13, 0.34, 0.78, 1
 
 <RootWidget>:
     orientation: "vertical"
-    padding: dp(10)
+    padding: [dp(10), dp(8), dp(10), dp(6)]
     spacing: dp(8)
     canvas.before:
         Color:
-            rgba: 0.97, 0.98, 0.99, 1
+            rgba: 0.95, 0.97, 1, 1
         Rectangle:
             pos: self.pos
             size: self.size
 
     BoxLayout:
         size_hint_y: None
-        height: dp(54)
+        height: dp(42)
         orientation: "vertical"
         Label:
             text: "Lönespec Pro"
-            color: 0.06, 0.09, 0.16, 1
+            color: 0.05, 0.08, 0.14, 1
             bold: True
             font_size: "25sp"
             halign: "left"
             valign: "middle"
             text_size: self.size
         Label:
-            text: "Android v4.1 · Tabell 34 kolumn 1"
+            text: "Snabb översikt över din lön"
             color: 0.39, 0.45, 0.55, 1
             font_size: "12sp"
             halign: "left"
@@ -124,7 +155,7 @@ KV = r"""
         cols: 3
         spacing: dp(8)
         size_hint_y: None
-        height: dp(78)
+        height: dp(82)
 
         SummaryCard:
             Label:
@@ -135,9 +166,11 @@ KV = r"""
                 height: dp(20)
             Label:
                 text: root.brutto_text
-                color: 0.06, 0.09, 0.16, 1
+                color: 0.05, 0.08, 0.14, 1
                 bold: True
                 font_size: "16sp"
+                halign: "center"
+                text_size: self.size
 
         SummaryCard:
             Label:
@@ -148,9 +181,11 @@ KV = r"""
                 height: dp(20)
             Label:
                 text: root.skatt_text
-                color: 0.86, 0.15, 0.15, 1
+                color: 0.82, 0.14, 0.14, 1
                 bold: True
                 font_size: "16sp"
+                halign: "center"
+                text_size: self.size
 
         SummaryCard:
             Label:
@@ -161,40 +196,60 @@ KV = r"""
                 height: dp(20)
             Label:
                 text: root.netto_text
-                color: 0.09, 0.64, 0.29, 1
+                color: 0.07, 0.56, 0.28, 1
                 bold: True
                 font_size: "16sp"
+                halign: "center"
+                text_size: self.size
 
-    Label:
-        text: root.effektiv_skatt_text
-        color: 0.39, 0.45, 0.55, 1
-        font_size: "14sp"
+    BoxLayout:
         size_hint_y: None
-        height: dp(24)
-        halign: "center"
-        valign: "middle"
-        text_size: self.size
+        height: dp(28)
+        padding: [dp(8), 0, dp(8), 0]
+        canvas.before:
+            Color:
+                rgba: 0.88, 0.94, 1, 1
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(14)]
+        Label:
+            text: root.effektiv_skatt_text
+            color: 0.13, 0.34, 0.78, 1
+            bold: True
+            font_size: "13sp"
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
 
     ScrollView:
         do_scroll_x: False
 
         BoxLayout:
             orientation: "vertical"
-            spacing: dp(10)
+            spacing: dp(9)
             size_hint_y: None
             height: self.minimum_height
 
             Card:
-                height: self.minimum_height
-                Label:
-                    text: "Månadslön"
-                    color: 0.06, 0.09, 0.16, 1
-                    bold: True
-                    font_size: "17sp"
+                height: dp(92)
+                BoxLayout:
+                    orientation: "horizontal"
                     size_hint_y: None
-                    height: dp(26)
-                    halign: "left"
-                    text_size: self.size
+                    height: dp(25)
+                    Label:
+                        text: "Månadslön"
+                        color: 0.05, 0.08, 0.14, 1
+                        bold: True
+                        font_size: "17sp"
+                        halign: "left"
+                        text_size: self.size
+                    Label:
+                        text: "kr före skatt"
+                        color: 0.39, 0.45, 0.55, 1
+                        font_size: "12sp"
+                        halign: "right"
+                        text_size: self.size
                 MoneyInput:
                     id: manadslon
                     hint_text: "Skriv månadslön"
@@ -205,11 +260,11 @@ KV = r"""
                 height: self.minimum_height
                 Label:
                     text: "Timmar"
-                    color: 0.06, 0.09, 0.16, 1
+                    color: 0.05, 0.08, 0.14, 1
                     bold: True
                     font_size: "17sp"
                     size_hint_y: None
-                    height: dp(26)
+                    height: dp(25)
                     halign: "left"
                     text_size: self.size
 
@@ -222,7 +277,7 @@ KV = r"""
                     BoxLayout:
                         orientation: "vertical"
                         size_hint_y: None
-                        height: dp(64)
+                        height: dp(60)
                         Label:
                             text: "OB Enkel"
                             color: 0.39, 0.45, 0.55, 1
@@ -233,14 +288,14 @@ KV = r"""
                             text_size: self.size
                         MoneyInput:
                             id: ob_enkel
-                            hint_text: "0"
+                            hint_text: "0,0 h"
                             input_type: "number"
                             on_text: root.live_update()
 
                     BoxLayout:
                         orientation: "vertical"
                         size_hint_y: None
-                        height: dp(64)
+                        height: dp(60)
                         Label:
                             text: "OB Kval"
                             color: 0.39, 0.45, 0.55, 1
@@ -251,14 +306,14 @@ KV = r"""
                             text_size: self.size
                         MoneyInput:
                             id: ob_kval
-                            hint_text: "0"
+                            hint_text: "0,0 h"
                             input_type: "number"
                             on_text: root.live_update()
 
                     BoxLayout:
                         orientation: "vertical"
                         size_hint_y: None
-                        height: dp(64)
+                        height: dp(60)
                         Label:
                             text: "Övertid"
                             color: 0.39, 0.45, 0.55, 1
@@ -269,14 +324,14 @@ KV = r"""
                             text_size: self.size
                         MoneyInput:
                             id: overtid
-                            hint_text: "0"
+                            hint_text: "0,0 h"
                             input_type: "number"
                             on_text: root.live_update()
 
                     BoxLayout:
                         orientation: "vertical"
                         size_hint_y: None
-                        height: dp(64)
+                        height: dp(60)
                         Label:
                             text: "Storhelg"
                             color: 0.39, 0.45, 0.55, 1
@@ -287,14 +342,14 @@ KV = r"""
                             text_size: self.size
                         MoneyInput:
                             id: storhelg
-                            hint_text: "0"
+                            hint_text: "0,0 h"
                             input_type: "number"
                             on_text: root.live_update()
 
                     BoxLayout:
                         orientation: "vertical"
                         size_hint_y: None
-                        height: dp(64)
+                        height: dp(60)
                         Label:
                             text: "Storhelg högre"
                             color: 0.39, 0.45, 0.55, 1
@@ -305,14 +360,14 @@ KV = r"""
                             text_size: self.size
                         MoneyInput:
                             id: storhelg_hogre
-                            hint_text: "0"
+                            hint_text: "0,0 h"
                             input_type: "number"
                             on_text: root.live_update()
 
                     BoxLayout:
                         orientation: "vertical"
                         size_hint_y: None
-                        height: dp(64)
+                        height: dp(60)
                         Label:
                             text: "Beredskap"
                             color: 0.39, 0.45, 0.55, 1
@@ -323,7 +378,7 @@ KV = r"""
                             text_size: self.size
                         MoneyInput:
                             id: beredskap
-                            hint_text: "0"
+                            hint_text: "0,0 h"
                             input_type: "number"
                             on_text: root.live_update()
 
@@ -338,26 +393,34 @@ KV = r"""
                     on_release: root.spara_aktuell()
 
                 LightButton:
-                    text: "Lönespec"
-                    on_release: root.visa_lonespec()
-
-            GridLayout:
-                cols: 3
-                spacing: dp(8)
-                size_hint_y: None
-                height: dp(44)
-
-                LightButton:
-                    text: "Historik"
-                    on_release: root.visa_historik()
-
-                LightButton:
-                    text: "Ersättning"
-                    on_release: root.visa_ersattningar()
-
-                LightButton:
                     text: "Rensa"
                     on_release: root.rensa()
+
+    GridLayout:
+        cols: 4
+        spacing: dp(4)
+        size_hint_y: None
+        height: dp(54)
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 1
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(18)]
+
+        NavButton:
+            text: "Hem"
+            on_release: root.go_home()
+        NavButton:
+            text: "Historik"
+            on_release: root.visa_historik()
+        NavButton:
+            text: "Lönespec"
+            on_release: root.visa_lonespec()
+        NavButton:
+            text: "Mer"
+            on_release: root.visa_installningar()
 """
 
 
@@ -411,16 +474,26 @@ class RootWidget(BoxLayout):
 
     def show_message(self, title, text, height=320):
         content = BoxLayout(orientation="vertical", padding=dp(14), spacing=dp(10))
-        label = Label(text=text, halign="left", valign="top")
+        label = Label(text=text, halign="left", valign="top", color=(0.05, 0.08, 0.14, 1))
         label.bind(size=lambda inst, val: setattr(inst, "text_size", val))
         content.add_widget(label)
 
-        btn = Button(text="OK", size_hint_y=None, height=dp(44))
+        btn = Button(
+            text="OK",
+            size_hint_y=None,
+            height=dp(44),
+            background_normal="",
+            background_color=(0.13, 0.34, 0.78, 1),
+            color=(1, 1, 1, 1),
+        )
         content.add_widget(btn)
 
         popup = Popup(title=title, content=content, size_hint=(0.92, None), height=dp(height))
         btn.bind(on_release=popup.dismiss)
         popup.open()
+
+    def go_home(self):
+        self.live_update()
 
     def spara_aktuell(self):
         self.live_update()
@@ -437,7 +510,47 @@ class RootWidget(BoxLayout):
         self.show_message("Lönespecifikation", self.current_spec, 620)
 
     def visa_ersattningar(self):
-        self.show_message("Ersättningar", self.ersattningar_text, 340)
+        self.show_message("Ersättningar", self.ersattningar_text, 360)
+
+    def visa_installningar(self):
+        text = (
+            "Inställningar\n"
+            "- Mörkt läge: förbereds i nästa steg\n"
+            "- Egna lönearter: planerat\n"
+            "- Export till PDF: planerat\n\n"
+            "Om appen\n"
+            f"{APP_INFO}\n\n"
+            "Ersättningar finns under knappen nedan."
+        )
+
+        content = BoxLayout(orientation="vertical", padding=dp(14), spacing=dp(8))
+        label = Label(text=text, halign="left", valign="top", color=(0.05, 0.08, 0.14, 1))
+        label.bind(size=lambda inst, val: setattr(inst, "text_size", val))
+        content.add_widget(label)
+
+        btn_rates = Button(
+            text="Visa ersättningar",
+            size_hint_y=None,
+            height=dp(44),
+            background_normal="",
+            background_color=(0.91, 0.95, 1, 1),
+            color=(0.05, 0.08, 0.14, 1),
+        )
+        btn_close = Button(
+            text="Stäng",
+            size_hint_y=None,
+            height=dp(44),
+            background_normal="",
+            background_color=(0.13, 0.34, 0.78, 1),
+            color=(1, 1, 1, 1),
+        )
+        content.add_widget(btn_rates)
+        content.add_widget(btn_close)
+
+        popup = Popup(title="Mer", content=content, size_hint=(0.92, None), height=dp(520))
+        btn_close.bind(on_release=popup.dismiss)
+        btn_rates.bind(on_release=lambda *_: (popup.dismiss(), self.visa_ersattningar()))
+        popup.open()
 
     def visa_historik(self):
         items = self.store.read() if self.store else []
@@ -462,6 +575,8 @@ class RootWidget(BoxLayout):
         for item in reversed(items[-8:]):
             lines.append(
                 f"{item.get('datum', '')}\n"
+                f"Brutto: {format_kr(item.get('brutto', 0))}\n"
+                f"Skatt: {format_kr(item.get('skatt', 0))}\n"
                 f"Netto: {format_kr(item.get('netto', 0))}\n"
             )
 
