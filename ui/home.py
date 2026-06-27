@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Lönespec Pro Android v4.0 layout
+Lönespec Pro Android v4.1 layoutfix
 
-Ny layout:
-- Sammanfattning högst upp
-- Kompakt tvåkolumnslayout för timmar
-- Lönespecifikation i popup
-- Ersättningar i popup
-- Mindre scroll
+Ändringar:
+- Tog bort Totalt timmar och Årslön från startsidan.
+- Flyttade Effektiv skatt till en diskret rad under sammanfattningen.
+- Fixade ersättnings-popup så radbrytningar visas korrekt.
 """
 
 from kivy.app import App
@@ -27,6 +25,11 @@ from core.calculator import (
     format_procent,
 )
 from core.storage import HistoryStore
+
+
+def format_ersattning(v):
+    """Visar ersättning snyggt, t.ex. 24,57 kr/h."""
+    return f"{v:.2f}".replace(".", ",") + " kr/h"
 
 
 KV = r"""
@@ -110,7 +113,7 @@ KV = r"""
             valign: "middle"
             text_size: self.size
         Label:
-            text: "Android v4.0 · Tabell 34 kolumn 1"
+            text: "Android v4.1 · Tabell 34 kolumn 1"
             color: 0.39, 0.45, 0.55, 1
             font_size: "12sp"
             halign: "left"
@@ -161,6 +164,16 @@ KV = r"""
                 color: 0.09, 0.64, 0.29, 1
                 bold: True
                 font_size: "16sp"
+
+    Label:
+        text: root.effektiv_skatt_text
+        color: 0.39, 0.45, 0.55, 1
+        font_size: "14sp"
+        size_hint_y: None
+        height: dp(24)
+        halign: "center"
+        valign: "middle"
+        text_size: self.size
 
     ScrollView:
         do_scroll_x: False
@@ -314,19 +327,6 @@ KV = r"""
                             input_type: "number"
                             on_text: root.live_update()
 
-            Card:
-                height: self.minimum_height
-                Label:
-                    text: root.extra_summary
-                    markup: True
-                    color: 0.06, 0.09, 0.16, 1
-                    font_size: "15sp"
-                    size_hint_y: None
-                    height: self.texture_size[1] + dp(4)
-                    halign: "left"
-                    valign: "top"
-                    text_size: self.width, None
-
             GridLayout:
                 cols: 2
                 spacing: dp(8)
@@ -365,10 +365,8 @@ class RootWidget(BoxLayout):
     brutto_text = StringProperty("0 kr")
     skatt_text = StringProperty("0 kr")
     netto_text = StringProperty("0 kr")
-    extra_summary = StringProperty("Fyll i månadslön och timmar. Resultatet uppdateras automatiskt.")
-    ersattningar_text = StringProperty(
-        "\\n".join([f"{namn}: {format_kr(v, 2)}/h" for namn, v in ERSATTNINGAR.items()])
-    )
+    effektiv_skatt_text = StringProperty("Effektiv skatt: 0,0 %")
+    ersattningar_text = StringProperty("\n".join([f"{namn}: {format_ersattning(v)}" for namn, v in ERSATTNINGAR.items()]))
 
     def __init__(self, **kwargs):
         Builder.load_string(KV)
@@ -401,18 +399,14 @@ class RootWidget(BoxLayout):
             self.brutto_text = "0 kr"
             self.skatt_text = "0 kr"
             self.netto_text = "0 kr"
-            self.extra_summary = "Fyll i månadslön och timmar. Resultatet uppdateras automatiskt."
+            self.effektiv_skatt_text = "Effektiv skatt: 0,0 %"
             self.current_spec = "Fyll i månadslön och timmar."
             return
 
         self.brutto_text = format_kr(data["brutto"])
         self.skatt_text = "-" + format_kr(data["skatt"])
         self.netto_text = format_kr(data["netto"])
-        self.extra_summary = (
-            f"[b]Effektiv skatt:[/b] {format_procent(data['effektiv_skatt'])}\\n"
-            f"[b]Totalt timmar:[/b] {str(round(data['totalt_timmar'], 2)).replace('.', ',')} h\\n"
-            f"[b]Årslön:[/b] {format_kr(data['arslon'])}"
-        )
+        self.effektiv_skatt_text = f"Effektiv skatt: {format_procent(data['effektiv_skatt'])}"
         self.current_spec = bygg_lonespec(data)
 
     def show_message(self, title, text, height=320):
@@ -443,7 +437,7 @@ class RootWidget(BoxLayout):
         self.show_message("Lönespecifikation", self.current_spec, 620)
 
     def visa_ersattningar(self):
-        self.show_message("Ersättningar", self.ersattningar_text, 360)
+        self.show_message("Ersättningar", self.ersattningar_text, 340)
 
     def visa_historik(self):
         items = self.store.read() if self.store else []
@@ -467,11 +461,11 @@ class RootWidget(BoxLayout):
 
         for item in reversed(items[-8:]):
             lines.append(
-                f"{item.get('datum', '')}\\n"
-                f"Netto: {format_kr(item.get('netto', 0))}\\n"
+                f"{item.get('datum', '')}\n"
+                f"Netto: {format_kr(item.get('netto', 0))}\n"
             )
 
-        self.show_message("Historik", "\\n".join(lines), 620)
+        self.show_message("Historik", "\n".join(lines), 620)
 
     def rensa(self):
         for field in [
@@ -490,4 +484,4 @@ class RootWidget(BoxLayout):
         self.brutto_text = "0 kr"
         self.skatt_text = "0 kr"
         self.netto_text = "0 kr"
-        self.extra_summary = "Fyll i månadslön och timmar. Resultatet uppdateras automatiskt."
+        self.effektiv_skatt_text = "Effektiv skatt: 0,0 %"
