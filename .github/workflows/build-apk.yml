@@ -39,11 +39,6 @@ jobs:
             "build-tools;35.0.0" \
             "ndk;25.2.9519653"
 
-      - name: Verify Android Build Tools
-        run: |
-          ls -la "$ANDROID_HOME/build-tools"
-          ls -la "$ANDROID_HOME/build-tools/35.0.0"
-
       - name: Install Python build tools
         run: |
           python3 -m pip install --upgrade pip
@@ -62,5 +57,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: LonespecPro-Android-v3-debug
+          name: LonespecPro-Android-v4-debug
           path: bin/*.apk
