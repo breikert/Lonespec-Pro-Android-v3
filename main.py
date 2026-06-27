@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Lönespec Pro Android v5.0."""
+"""Lönespec Pro Android v3.0."""
 
 from kivy.app import App
 from kivy.core.window import Window
